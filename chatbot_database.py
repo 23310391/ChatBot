@@ -36,17 +36,29 @@ def insertar_par(entrada, respuesta):
 
 def procesar_json(filepath):
     with open(filepath, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-        dialogues = data.get('dialogues', [])
-        for dialogo in dialogues:
-            # Cada dialogo es un string con turnos separados por \n
-            turnos = [format_data(t) for t in dialogo.split('\n') if format_data(t)]
-            # Crear pares: (turno_i → turno_i+1)
-            for i in range(len(turnos) - 1):
-                entrada = turnos[i]
-                respuesta = turnos[i + 1]
-                if acceptable(entrada) and acceptable(respuesta):
-                    insertar_par(entrada, respuesta)
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                data = json.loads(line)
+
+                body = data.get('body', '')
+
+                # Ignorar comentarios eliminados o vacíos
+                if not body or body in ('[deleted]', '[removed]'):
+                    continue
+
+                turnos = [format_data(t) for t in body.split('\n') if format_data(t)]
+
+                for i in range(len(turnos) - 1):
+                    entrada = turnos[i]
+                    respuesta = turnos[i + 1]
+                    if acceptable(entrada) and acceptable(respuesta):
+                        insertar_par(entrada, respuesta)
+
+            except json.JSONDecodeError:
+                pass
 
 if __name__ == "__main__":
     create_table()
@@ -56,7 +68,7 @@ if __name__ == "__main__":
     # Recorre todas las subcarpetas recursivamente
     for root, dirs, files in os.walk(dataset_path):
         for filename in files:
-            if filename.endswith('.json'):
+            if filename.endswith('.jsonl'):
                 filepath = os.path.join(root, filename)
                 procesar_json(filepath)
                 archivos += 1
