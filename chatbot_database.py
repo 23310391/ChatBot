@@ -25,6 +25,10 @@ def acceptable(data):
         return False
     if len(data) > 500:
         return False
+    if data.startswith('http'):      # ← elimina links
+        return False
+    if data.count('?') > 3:         # ← elimina spam de signos
+        return False
     return True
 
 def insertar_par(entrada, respuesta):
@@ -41,22 +45,15 @@ def procesar_json(filepath):
             if not line:
                 continue
             try:
-                data = json.loads(line)
-
-                body = data.get('body', '')
-
-                # Ignorar comentarios eliminados o vacíos
-                if not body or body in ('[deleted]', '[removed]'):
-                    continue
-
-                turnos = [format_data(t) for t in body.split('\n') if format_data(t)]
-
-                for i in range(len(turnos) - 1):
-                    entrada = turnos[i]
-                    respuesta = turnos[i + 1]
-                    if acceptable(entrada) and acceptable(respuesta):
-                        insertar_par(entrada, respuesta)
-
+                data = json.loads(line)          # ← línea por línea (JSONL)
+                dialogues = data.get('dialogues', [])   # ← sí era dialogues
+                for dialogo in dialogues:
+                    turnos = [format_data(t) for t in dialogo.split('\n') if format_data(t)]
+                    for i in range(len(turnos) - 1):
+                        entrada = turnos[i]
+                        respuesta = turnos[i + 1]
+                        if acceptable(entrada) and acceptable(respuesta):
+                            insertar_par(entrada, respuesta)
             except json.JSONDecodeError:
                 pass
 

@@ -11,7 +11,7 @@ with open('matrix.pkl', 'rb') as f:
 with open('respuestas.pkl', 'rb') as f:
     respuestas = pickle.load(f)
 
-UMBRAL = 0.15  # Si la similitud es menor, el bot "no sabe"
+UMBRAL = 0.3  # Si la similitud es menor, el bot "no sabe"
 
 def responder(mensaje: str) -> str:
     vec = vectorizer.transform([mensaje])
